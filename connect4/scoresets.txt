@@ -1,0 +1,15 @@
+#scoreset_X: 20/max_steps, -30/max_steps, 1/max_steps, -1
+#scoreset_W: 20/max_steps, -10/max_steps, 1/max_steps, -1
+#scoreset_U: 10/max_steps, -10/max_steps, 1/max_steps, -1
+#scoreset_Y: 10/max_steps, -20/max_steps, 1/max_steps, -1
+#scoreset_Z: 2/max_steps, -10/max_steps, 1/max_steps, -1
+#scoreset_A: 10/42, -100/42, 1/42, -10
+#scoreset_B: 1/42, -100/42, 1/42, -420/42
+#scoreset_C: 1/2*42, -210/42, 1/42, -420/42
+#scoreset_D: -1/42, -300/42, 1/42, -420/42
+#scoreset_E: -1/42, -300/42, 2/42, -420/42
+#scoreset_F: -50/42, -300/42, 1/42, -400/42
+#scoreset_G: -200/42, -300/42, 1/42, -400/42
+#scoreset_H: -1/42, -200/42, 2/42, -400/42
+#scoreset_J: 3/42, -42/42, 1/42, -420/42
+#scoreset_O: 1, -1, 1/42, -10
