@@ -2,8 +2,7 @@ def my_agent(obs, config, N_STEPS=2, debug=False):
 
     import numpy as np
     import random
-    import time
-
+    
     ########################### Regular pruner ################
     # constants (given by game)
     ROWS = config.rows
