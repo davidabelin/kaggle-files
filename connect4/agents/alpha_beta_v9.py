@@ -1,8 +1,13 @@
-def my_agent(obs, config, N_STEPS=2, debug=False):
+"""Alpha-beta heuristic agent tuned for the v9 baseline."""
 
-    import numpy as np
-    import random
-    import time
+from __future__ import annotations
+
+import random
+
+import numpy as np
+
+
+def my_agent(obs, config, N_STEPS=2, debug=False):
 
     ########################### Regular pruner ################
     # constants (given by game)
@@ -10,33 +15,19 @@ def my_agent(obs, config, N_STEPS=2, debug=False):
     COLUMNS = config.columns
     CNCTX = config.inarow
     ## coefficients
-    A = 2       #my twos
-    B = 20     #my threes
-    C = 2000   #my fours
-    D = -1      #opp-twos
-    E = -10     #opp-threes
+    A = 2     #my twos
+    B = 20    #my threes
+    C = 200   #my fours
+    D = -1    #opp-twos
+    E = -10    #opp-threes
     F = -100   #opp-fours
-    X = 10       #my mid-twos
-    Y = -10       #opp mid-twos
     
-    # vary lookahead depth according to stat e of play:
-    if obs.board.count(0) >= 6*(ROWS*COLUMNS//7):
-        N_STEPS =   2
+    # vary lookahead depth according to state of play:
+    if obs.board.count(0) >= ROWS*COLUMNS//2:
+        N_STEPS =      2
     else:
-        N_STEPS =   3
-  
-    top_row = list(obs.board[0:7])  
-    if top_row.count(0) >= 6:
-        N_STEPS =   3     
-    elif top_row.count(0) >= 5:
-        N_STEPS =   4  
-    elif top_row.count(0) >= 4:
-        N_STEPS =   5
-    elif top_row.count(0) >= 3:
-        N_STEPS =   6  
-    else:    
-        N_STEPS =   3
-    
+        N_STEPS =      3  # deeper search after half the board is filled
+
     if debug:
         if obs.board.count(1) == 0:
             print(f'"configuration":{config}')  
@@ -57,76 +48,45 @@ def my_agent(obs, config, N_STEPS=2, debug=False):
         return (window.count(piece) == num_discs and window.count(0) == CNCTX-num_discs)
 
     # Helper function for get_score: counts number of windows satisfying specified heuristic conditions
-    def count_windows(grid, num_discs, piece, checkmid=False):
+    def count_windows(grid, num_discs, piece):
         num_windows = 0
         # horizontal
         for row in range(ROWS):
             for col in range(COLUMNS-(CNCTX-1)):
                 window = list(grid[row, col:col+CNCTX])
                 if check_window(window, num_discs, piece):
-                    if checkmid:
-                        if window[0] == 0 and window[-1] == 0:
-                            num_windows += 1
-                    else:
-                        num_windows += 1
+                    num_windows += 1
         # vertical
         for row in range(ROWS-(CNCTX-1)):
             for col in range(COLUMNS):
                 window = list(grid[row:row+CNCTX, col])
                 if check_window(window, num_discs, piece):
-                    if checkmid:
-                        if window[0] == 0 and window[-1] == 0:
-                            num_windows += 1
-                    else:
-                        num_windows += 1
+                    num_windows += 1
         # positive diagonal
         for row in range(ROWS-(CNCTX-1)):
             for col in range(COLUMNS-(CNCTX-1)):
                 window = list(grid[range(row, row+CNCTX), range(col, col+CNCTX)])
                 if check_window(window, num_discs, piece):
-                    if checkmid:
-                        if window[0] == 0 and window[-1] == 0:
-                            num_windows += 1
-                    else:
-                        num_windows += 1
+                    num_windows += 1
         # negative diagonal
         for row in range(CNCTX-1, ROWS):
             for col in range(COLUMNS-(CNCTX-1)):
                 window = list(grid[range(row, row-CNCTX, -1), range(col, col+CNCTX)])
                 if check_window(window, num_discs, piece):
-                    if checkmid:
-                        if window[0] == 0 and window[-1] == 0:
-                            num_windows += 1
-                    else:
-                        num_windows += 1
+                    num_windows += 1
         return num_windows
-        
-    # Quickly checks to see if the game could be won or lost in next step
-    def check_terminal(grid, mark):
-        is_terminal = (count_windows(grid, 4, mark) != 0) or (list(grid[0, :]).count(0) == 0)
-        return is_terminal
-    
+
     # Helper function for alphabeta: calculates value of heuristic for grid
     def get_score(grid, mark):
-        if list(grid[0, :]).count(0) == 0:
-            return 0, True
-        
-        num_fours = count_windows(grid, 4, mark)   #C
-        num_fours_opp = count_windows(grid, 4, mark%2+1)  #F
-        if (num_fours != 0) or (num_fours_opp != 0):
-            return C*num_fours + F*num_fours_opp, True
-        
-        num_threes = count_windows(grid, 3, mark)  #B
-        num_threes_opp = count_windows(grid, 3, mark%2+1) #E
-        
         num_twos = count_windows(grid, 2, mark) #A
+        num_threes = count_windows(grid, 3, mark)  #B
+        num_fours = count_windows(grid, 4, mark)   #C
         num_twos_opp = count_windows(grid, 2, mark%2+1) #D
-        
-        mid_twos = count_windows(grid, 2, mark, checkmid=True)
-        mid_twos_opp = count_windows(grid, 2, mark%2+1, checkmid=True)
-        
-        score = A*num_twos + B*num_threes + D*num_twos_opp + E*num_threes_opp + X*mid_twos + Y*mid_twos_opp
-        return score, False #not terminal
+        num_threes_opp = count_windows(grid, 3, mark%2+1) #E
+        num_fours_opp = count_windows(grid, 4, mark%2+1)  #F     
+        score = A*num_twos + B*num_threes + C*num_fours + D*num_twos_opp + E*num_threes_opp + F*num_fours_opp
+        is_terminal = (not num_fours == 0) or (not num_fours_opp == 0) or (list(grid[0, :]).count(0) == 0)
+        return score, is_terminal
 
     # Minimax with alphabeta pruning implementation:
     def alphabeta(node, depth, alpha, beta, maximizingPlayer, mark):
@@ -158,22 +118,19 @@ def my_agent(obs, config, N_STEPS=2, debug=False):
     # Uses alphabeta pruning to calculate value
     # of dropping piece in selected column
     def score_move(grid, col, mark, depth):
-        go = time.time()
         next_grid = drop_piece(grid, col, mark)
         score = alphabeta(next_grid, depth-1, -np.Inf, np.Inf, False, mark)
         if debug:
             summary_stats = {
                 'column': col,
                 'score': score,
-                'column time': round(time.time() - go, 5)
             }
             print(f'"summary_stats":{summary_stats}')
         return score
     
     def first_pass(grid, col, mark):
-        player_is_terminal = check_terminal(drop_piece(grid, col, mark), mark)
-        opp_is_terminal = check_terminal(drop_piece(grid, col, mark%2+1), mark%2+1)
-        return opp_is_terminal or player_is_terminal
+        score, is_terminal = get_score(grid, mark)
+        return is_terminal
     
     #########################
     # Agent makes selection #
@@ -185,17 +142,15 @@ def my_agent(obs, config, N_STEPS=2, debug=False):
     # Convert the board to a 2D grid
     grid = np.asarray(obs.board).reshape(ROWS, COLUMNS)
 
-    # Do a quick pass to see if there is a terminal node on the surface 
+    # Do a quick pass at depth zero to see if there is a positive terminal node
     quick_pick = False
     for col in valid_moves:
         quick_pick = first_pass(grid, col, obs.mark)
-        if quick_pick:
-            choice = col   
-            if debug:
-                print("Column {} is terminal.".format(choice))
-            break
-            
-    if not quick_pick:   
+    if quick_pick:
+        choice = col   
+        if debug:
+            print("Column {} is terminal.".format(choice)) 
+    else:   
         # Use the heuristic to assign a score to each possible board in the next step
         scores = dict(zip(valid_moves, [score_move(grid, col, obs.mark, N_STEPS) for col in valid_moves]))
 
@@ -212,3 +167,7 @@ def my_agent(obs, config, N_STEPS=2, debug=False):
     if debug:
         print("Chosen column:", choice)
     return choice
+
+
+agent = my_agent
+__all__ = ["my_agent", "agent"]

@@ -1,8 +1,14 @@
-def my_agent(obs, config, START_TIME=None, N_STEPS=2, cutoff_time=None, debug=False):
+"""Time boxed alpha-beta agent tuned for Kaggle's execution window."""
 
-    import numpy as np
-    import random
-    import time
+from __future__ import annotations
+
+import random
+import time
+
+import numpy as np
+
+
+def my_agent(obs, config, START_TIME=None, N_STEPS=2, cutoff_time=None, debug=False):
 
     ########################### Regular pruner ################
     # constants (given by game)
@@ -173,3 +179,7 @@ def my_agent(obs, config, START_TIME=None, N_STEPS=2, cutoff_time=None, debug=Fa
         print("Chosen column:", choice)
 
     return choice
+
+
+agent = my_agent
+__all__ = ["my_agent", "agent"]
