@@ -86,7 +86,7 @@ def weights(obs, config):
     def alphabeta(node, depth, alpha, beta, maximizingPlayer, mark):
         node_score, is_terminal = get_score(node, mark)
         if depth == 0 or is_terminal:
-             return node_score
+            return node_score
             
         valid_moves = [c for c in range(COLUMNS) if node[0][c] == 0]
 
